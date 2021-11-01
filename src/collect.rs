@@ -213,9 +213,10 @@ fn mark_roots() {
         drained.collect()
     });
 
-    let mut new_roots : Vec<_> = old_roots.into_iter().filter_map(|s| {
-        let keep = unsafe {
-            let box_ptr : &dyn CcBoxPtr = s.as_ref();
+    let mut new_roots: Vec<_> = old_roots
+        .into_iter()
+        .filter(|s| unsafe {
+            let box_ptr: &dyn CcBoxPtr = s.as_ref();
             if box_ptr.color() == Color::Purple {
                 mark_gray(box_ptr);
                 true
@@ -223,19 +224,13 @@ fn mark_roots() {
                 box_ptr.data().buffered.set(false);
 
                 if box_ptr.color() == Color::Black && box_ptr.strong() == 0 {
-                    free(s);
+                    free(*s);
                 }
 
                 false
             }
-        };
-
-        if keep {
-            Some(s)
-        } else {
-            None
-        }
-    }).collect();
+        })
+        .collect();
 
     ROOTS.with(|r| {
         let mut v = r.borrow_mut();
